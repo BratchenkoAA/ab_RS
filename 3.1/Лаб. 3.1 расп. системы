@@ -1,0 +1,228 @@
+Лаб. 3.1 расп. системы
+Терминал 1. 
+==========================================================================================================================================
+root@DESKTOP-KP2FBGA:~/lab2_variant1/flask-library# cd ~/lab2_variant1/flask-library
+source venv/bin/activate
+cd rabbitmq_async
+python consumer.py
+python: can't open file '/root/lab2_variant1/flask-library/rabbitmq_async/consumer.py': [Errno 2] No such file or directory
+(venv) root@DESKTOP-KP2FBGA:~/lab2_variant1/flask-library/rabbitmq_async# cd ~/lab2_variant1/flask-library/rabbitmq_async
+nano consumer.py
+(venv) root@DESKTOP-KP2FBGA:~/lab2_variant1/flask-library/rabbitmq_async# nano producer.py
+(venv) root@DESKTOP-KP2FBGA:~/lab2_variant1/flask-library/rabbitmq_async# ls -la
+total 20
+drwxr-xr-x 2 root root   4096 Apr  1 09:21 .
+drwxr-xr-x 5 root root   4096 Apr  1 09:11 ..
+-rw-r--r-- 1 root root   3844 Apr  1 09:21 consumer.py
+-rw-r--r-- 1 root root    246 Apr  1 09:14 docker-compose.yml
+-rw-r--r-- 1 root docker 2183 Apr  1 09:21 producer.py
+(venv) root@DESKTOP-KP2FBGA:~/lab2_variant1/flask-library/rabbitmq_async# cd ~/lab2_variant1/flask-library
+source venv/bin/activate
+cd rabbitmq_async
+python consumer.py
+Traceback (most recent call last):
+  File "/root/lab2_variant1/flask-library/rabbitmq_async/consumer.py", line 10, in <module>
+    import order_service_pb2
+ModuleNotFoundError: No module named 'order_service_pb2'
+(venv) root@DESKTOP-KP2FBGA:~/lab2_variant1/flask-library/rabbitmq_async# cd ~/lab2_variant1/flask-library
+cp grpc_sync/order_service_pb2.py rabbitmq_async/
+cp grpc_sync/order_service_pb2_grpc.py rabbitmq_async/
+cp: cannot stat 'grpc_sync/order_service_pb2.py': No such file or directory
+cp: cannot stat 'grpc_sync/order_service_pb2_grpc.py': No such file or directory
+(venv) root@DESKTOP-KP2FBGA:~/lab2_variant1/flask-library# cd ~/lab2_variant1/flask-library/grpc_sync
+ls -la
+total 24
+drwxr-xr-x 2 root root 4096 Apr  1 09:14 .
+drwxr-xr-x 5 root root 4096 Apr  1 09:11 ..
+-rw-r--r-- 1 root root 5264 Apr  1 09:14 grpc_server.py
+-rw-r--r-- 1 root root  655 Apr  1 09:12 order_service.pro
+-rw-r--r-- 1 root root  694 Apr  1 09:13 order_service.proto
+(venv) root@DESKTOP-KP2FBGA:~/lab2_variant1/flask-library/grpc_sync# cat > order_service.proto << 'EOF'
+syntax = "proto3";
+
+package order;
+
+service OrderService {
+    rpc ValidateOrder (OrderRequest) returns (ValidationResponse) {}
+    rpc GetWebsiteStatus (UrlRequest) returns (StatusResponse) {}
+    rpc AnalyzeSentiment (ReviewRequest) returns (SentimentResponse) {}
+}
+
+message OrderRequest {
+    string order_data = 1;
+}
+
+message ValidationResponse {
+EOF float confidence = 2; {
+(venv) root@DESKTOP-KP2FBGA:~/lab2_variant1/flask-library/grpc_sync# python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. order_service.proto
+(venv) root@DESKTOP-KP2FBGA:~/lab2_variant1/flask-library/grpc_sync# ls -la
+total 36
+drwxr-xr-x 2 root root 4096 Apr  1 09:23 .
+drwxr-xr-x 5 root root 4096 Apr  1 09:11 ..
+-rw-r--r-- 1 root root 5264 Apr  1 09:14 grpc_server.py
+-rw-r--r-- 1 root root  655 Apr  1 09:12 order_service.pro
+-rw-r--r-- 1 root root  654 Apr  1 09:23 order_service.proto
+-rw-r--r-- 1 root root 2630 Apr  1 09:23 order_service_pb2.py
+-rw-r--r-- 1 root root 6988 Apr  1 09:23 order_service_pb2_grpc.py
+(venv) root@DESKTOP-KP2FBGA:~/lab2_variant1/flask-library/grpc_sync# cp order_service_pb2.py ../rabbitmq_async/
+cp order_service_pb2_grpc.py ../rabbitmq_async/
+(venv) root@DESKTOP-KP2FBGA:~/lab2_variant1/flask-library/grpc_sync# cd ~/lab2_variant1/flask-library/grpc_sync
+source ../venv/bin/activate
+python grpc_server.py
+==================================================
+gRPC сервер запущен на порту 50051
+Доступные методы:
+  - ValidateOrder (валидация заказов)
+  - GetWebsiteStatus (мониторинг сайтов)
+  - AnalyzeSentiment (анализ тональности)
+==================================================
+# В новом терминале проверьте
+sudo netstat -tlnp | grep 50051cp -r ~/lab2_variant1/flask-library /mnt/c/Users/Ваше_имя/Desktop 
+
+
+
+
+==========================================================================================================================================
+Терминал 2 
+==========================================================================================================================================
+root@DESKTOP-KP2FBGA:~/lab2_variant1/flask-library# cd ~/lab2_variant1/flask-library/rabbitmq_async
+source ../venv/bin/activate
+python consumer.py
+==================================================
+Consumer запущен. Ожидание сообщений...
+Доступные типы сообщений:
+  - validate_order: валидация заказа
+  - check_url: проверка URL
+  - sentiment: анализ тональности
+==================================================
+
+📨 Получено сообщение: {"type": "validate_order", "data": "{\"order_id\": 12345, \"customer_name\": \"\\u0418\\u0432\\u0430\\u043d \\u041f\\u0435\\u0442\\u0440\\u043e\\u0432\", \"product\": \"\\u041d\\u043e\\u0443\\u0442\\u0431\\u0443\\u043a\", \"quantity\": 1, \"price\": 50000}"}
+✅ Результат: Ошибка gRPC: failed to connect to all addresses; last error: UNKNOWN: ipv4:127.0.0.1:50051: Failed to connect to remote host: Connection refused
+
+📨 Получено сообщение: {"type": "validate_order", "data": "{\"order_id\": 12345, \"customer_name\": \"\\u0418\\u0432\\u0430\\u043d \\u041f\\u0435\\u0442\\u0440\\u043e\\u0432\", \"product\": \"\\u041d\\u043e\\u0443\\u0442\\u0431\\u0443\\u043a\", \"quantity\": 1, \"price\": 50000}"}
+✅ Результат: Статус: VALID, Сообщение: Заказ успешно проверен
+
+📨 Получено сообщение: {"type": "check_url", "data": "google.com"}
+✅ Результат: Статус-код: 200, Сообщение: Успешный запрос к http://google.com
+
+📨 Получено сообщение: {"type": "sentiment", "data": "\u041e\u0442\u043b\u0438\u0447\u043d\u044b\u0439 \u0441\u0435\u0440\u0432\u0438\u0441! \u041e\u0447\u0435\u043d\u044c \u0434\u043e\u0432\u043e\u043b\u0435\u043d, \u0440\u0435\u043a\u043e\u043c\u0435\u043d\u0434\u0443\u044e \u0432\u0441\u0435\u043c!"}
+✅ Результат: Тональность: POSITIVE, Уверенность: 0.8999999761581421
+
+📨 Получено сообщение: {"type": "validate_order", "data": "{\"order_id\": 12345, \"customer_name\": \"\\u0418\\u0432\\u0430\\u043d \\u041f\\u0435\\u0442\\u0440\\u043e\\u0432\", \"product\": \"\\u041d\\u043e\\u0443\\u0442\\u0431\\u0443\\u043a\", \"quantity\": 1, \"price\": 50000}"}
+✅ Результат: Статус: VALID, Сообщение: Заказ успешно проверен
+
+📨 Получено сообщение: {"type": "check_url", "data": "google.com"}
+✅ Результат: Статус-код: 200, Сообщение: Успешный запрос к http://google.com
+
+📨 Получено сообщение: {"type": "sentiment", "data": "\u041e\u0442\u043b\u0438\u0447\u043d\u044b\u0439 \u0441\u0435\u0440\u0432\u0438\u0441! \u041e\u0447\u0435\u043d\u044c \u0434\u043e\u0432\u043e\u043b\u0435\u043d, \u0440\u0435\u043a\u043e\u043c\u0435\u043d\u0434\u0443\u044e \u0432\u0441\u0435\u043c!"}
+✅ Результат: Тональность: POSITIVE, Уверенность: 0.8999999761581421
+
+📨 Получено сообщение: {"type": "validate_order", "data": "{\"order_id\": 12345, \"customer_name\": \"\\u0418\\u0432\\u0430\\u043d \\u041f\\u0435\\u0442\\u0440\\u043e\\u0432\", \"product\": \"\\u041d\\u043e\\u0443\\u0442\\u0431\\u0443\\u043a\", \"quantity\": 1, \"price\": 50000}"}
+✅ Результат: Статус: VALID, Сообщение: Заказ успешно проверен
+
+📨 Получено сообщение: {"type": "validate_order", "data": "{\"order_id\": 12345, \"customer_name\": \"\\u0418\\u0432\\u0430\\u043d \\u041f\\u0435\\u0442\\u0440\\u043e\\u0432\", \"product\": \"\\u041d\\u043e\\u0443\\u0442\\u0431\\u0443\\u043a\", \"quantity\": 1, \"price\": 50000}"}
+✅ Результат: Статус: VALID, Сообщение: Заказ успешно проверен
+
+📨 Получено сообщение: {"type": "check_url", "data": "google.com"}
+✅ Результат: Статус-код: 200, Сообщение: Успешный запрос к http://google.com
+
+📨 Получено сообщение: {"type": "sentiment", "data": "\u041e\u0442\u043b\u0438\u0447\u043d\u044b\u0439 \u0441\u0435\u0440\u0432\u0438\u0441! \u041e\u0447\u0435\u043d\u044c \u0434\u043e\u0432\u043e\u043b\u0435\u043d, \u0440\u0435\u043a\u043e\u043c\u0435\u043d\u0434\u0443\u044e \u0432\u0441\u0435\u043c!"}
+✅ Результат: Тональность: POSITIVE, Уверенность: 0.8999999761581421
+
+📨 Получено сообщение: {"type": "validate_order", "data": "{\"order_id\": 12345, \"customer_name\": \"\\u0418\\u0432\\u0430\\u043d \\u041f\\u0435\\u0442\\u0440\\u043e\\u0432\", \"product\": \"\\u041d\\u043e\\u0443\\u0442\\u0431\\u0443\\u043a\", \"quantity\": 1, \"price\": 50000}"}
+✅ Результат: Статус: VALID, Сообщение: Заказ успешно проверен
+
+📨 Получено сообщение: {"type": "check_url", "data": "google.com"}
+✅ Результат: Статус-код: 200, Сообщение: Успешный запрос к http://google.com
+
+📨 Получено сообщение: {"type": "sentiment", "data": "\u041e\u0442\u043b\u0438\u0447\u043d\u044b\u0439 \u0441\u0435\u0440\u0432\u0438\u0441! \u041e\u0447\u0435\u043d\u044c \u0434\u043e\u0432\u043e\u043b\u0435\u043d, \u0440\u0435\u043a\u043e\u043c\u0435\u043d\u0434\u0443\u044e \u0432\u0441\u0435\u043c!"}
+✅ Результат: Тональность: POSITIVE, Уверенность: 0.8999999761581421
+
+📨 Получено сообщение: {"type": "validate_order", "data": "{\"order_id\": 12345, \"customer_name\": \"\\u0418\\u0432\\u0430\\u043d \\u041f\\u0435\\u0442\\u0440\\u043e\\u0432\", \"product\": \"\\u041d\\u043e\\u0443\\u0442\\u0431\\u0443\\u043a\", \"quantity\": 1, \"price\": 50000}"}
+✅ Результат: Статус: VALID, Сообщение: Заказ успешно проверен
+
+📨 Получено сообщение: {"type": "check_url", "data": "google.com"}
+✅ Результат: Статус-код: 200, Сообщение: Успешный запрос к http://google.com
+
+📨 Получено сообщение: {"type": "sentiment", "data": "\u041e\u0442\u043b\u0438\u0447\u043d\u044b\u0439 \u0441\u0435\u0440\u0432\u0438\u0441! \u041e\u0447\u0435\u043d\u044c \u0434\u043e\u0432\u043e\u043b\u0435\u043d, \u0440\u0435\u043a\u043e\u043c\u0435\u043d\u0434\u0443\u044e \u0432\u0441\u0435\u043c!"}
+✅ Результат: Тональность: POSITIVE, Уверенность: 0.8999999761581421
+==========================================================================================================================================
+Терминал 3
+==========================================================================================================================================
+root@DESKTOP-KP2FBGA:~/lab2_variant1/flask-library# cd ~/lab2_variant1/flask-library/rabbitmq_async
+source ../venv/bin/activate
+python producer.py order
+Отправлен заказ на валидацию: 12345
+(venv) root@DESKTOP-KP2FBGA:~/lab2_variant1/flask-library/rabbitmq_async# # В новом терминале проверьте
+sudo netstat -tlnp | grep 50051
+tcp6       0      0 :::50051                :::*                    LISTEN      65357/python        
+(venv) root@DESKTOP-KP2FBGA:~/lab2_variant1/flask-library/rabbitmq_async# # Задание 1: Валидация заказа
+python producer.py order
+
+# Задание 2: Мониторинг сайтов
+python producer.py url
+
+# Задание 3: Анализ тональности
+python producer.py sentiment
+
+# Или отправить всё сразу
+python producer.py
+Отправлен заказ на валидацию: 12345
+Отправлен URL для проверки: google.com
+Отправлен текст для анализа тональности
+Отправка всех типов сообщений...
+Отправлен заказ на валидацию: 12345
+Отправлен URL для проверки: google.com
+Отправлен текст для анализа тональности
+(venv) root@DESKTOP-KP2FBGA:~/lab2_variant1/flask-library/rabbitmq_async# ^C
+(venv) root@DESKTOP-KP2FBGA:~/lab2_variant1/flask-library/rabbitmq_async# python producer.py order
+Отправлен заказ на валидацию: 12345
+(venv) root@DESKTOP-KP2FBGA:~/lab2_variant1/flask-library/rabbitmq_async# cd ~/lab2_variant1/flask-library/rabbitmq_async
+cat > test_grpc.py << 'EOF'
+import grpc
+import sys
+sys.path.append('/root/lab2_variant1/flask-library/grpc_sync')
+import order_service_pb2
+import order_service_pb2_grpc
+
+try:
+    with grpc.insecure_channel('127.0.0.1:50051') as channel:
+        stub = order_service_pb2_grpc.OrderServiceStub(channel)
+        response = stub.ValidateOrder(
+            order_service_pb2.OrderRequest(order_data='{"order_id": 1}')
+        )
+        print(f"Успешно: {response.status}")
+python test_grpc.py {e}")
+Успешно: INVALID
+(venv) root@DESKTOP-KP2FBGA:~/lab2_variant1/flask-library/rabbitmq_async# cd ~/lab2_variant1/flask-library/rabbitmq_async
+source ../venv/bin/activate
+
+# Задание 1: Валидация заказа
+python producer.py order
+
+# Задание 2: Мониторинг сайта
+python producer.py url
+
+# Задание 3: Анализ тональности
+python producer.py sentiment
+
+# Или всё сразу
+python producer.py
+Отправлен заказ на валидацию: 12345
+Отправлен URL для проверки: google.com
+Отправлен текст для анализа тональности
+Отправка всех типов сообщений...
+Отправлен заказ на валидацию: 12345
+Отправлен URL для проверки: google.com
+Отправлен текст для анализа тональности
+(venv) root@DESKTOP-KP2FBGA:~/lab2_variant1/flask-library/rabbitmq_async# # Задание 1: Валидация заказа
+python producer.py order
+Отправлен заказ на валидацию: 12345
+(venv) root@DESKTOP-KP2FBGA:~/lab2_variant1/flask-library/rabbitmq_async# cd ~/lab2_variant1/flask-library/rabbitmq_async
+source ../venv/bin/activate
+python producer.py url
+Отправлен URL для проверки: google.com
+(venv) root@DESKTOP-KP2FBGA:~/lab2_variant1/flask-library/rabbitmq_async# cd ~/lab2_variant1/flask-library/rabbitmq_async
+source ../venv/bin/activate
+python producer.py sentiment
+Отправлен текст для анализа тональности
